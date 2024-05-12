@@ -5,7 +5,7 @@ date: "2024-05-06"
 output: html_document
 ---
 
-![](/Users/tom/Desktop/R Studio Project/PSY6422_UFO_sightings/Images/UFO_Image.jpeg)
+![](/Users/tom/Desktop/PSY6422 R Project/PSY6422_UFO_AIRPORTS/Images/UFO_image.jpeg)
 
 
 
@@ -64,10 +64,10 @@ library(kableExtra)
 ### Importing data
 ```{r import data}
 #load UFO data
-ufo_data <- read.csv("https://raw.githubusercontent.com/tomhbird/PSY6422_UFO_SIGHTINGS/main/Raw/complete.csv")
+ufo_data <- read.csv("https://raw.githubusercontent.com/tomhbird/PSY6422_UFO_AIRPORTS/main/Raw/complete.nosync.csv")
 
 #load US airport data
-airport_data <- read.csv("https://raw.githubusercontent.com/tomhbird/PSY6422_UFO_SIGHTINGS/main/Raw/list-of-airports-in-united-states-of-america-hxl-tags-1.csv")
+airport_data <- read.csv("https://raw.githubusercontent.com/tomhbird/PSY6422_UFO_AIRPORTS/main/Raw/list-of-airports-in-united-states-of-america-hxl-tags-1.nosync.csv")
 ```
 
 ### Cleaning the data 
@@ -104,6 +104,10 @@ str(ufo_data_trim$duration..seconds.)
 ufo_data_trim <- ufo_data_trim %>%
   mutate(shape = ifelse(shape == "", "unknown", shape))
 
+```
+
+```{r displaying the UFO data}
+kable(ufo_data_trim, format = "markdown")
 ```
 
 ```{r data wrangling airport, results='hide', warning=FALSE}
