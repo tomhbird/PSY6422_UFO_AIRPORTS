@@ -1,0 +1,160 @@
+---
+title: "Module Project - PSY6422"
+author: 'ID: 230170519'
+date: "2024-05-06"
+output: html_document
+---
+
+![](/Users/tom/Desktop/R Studio Project/PSY6422_UFO_sightings/Images/UFO_Image.jpeg)
+
+
+
+# **Investigating the Relationship Between Major Airport Locations and UFO Sightings in Mainland USA**
+
+
+## Background & Research Questions
+
+The phenomenon of unidentified flying objects (UFOs) has captivated the imagination of people around the world for decades. While I don't particularly admire Donald Trump, his decision to express interest in releasing information regarding UFOs and extraterrestrial intelligence, particularly evidenced by the Pentagon's release of UAP videos in 2020, was intriguing. While many sightings remain unexplained, steps have been taken to allow individuals to document their sightings, including factors such as location, duration, shape, and date. For example, The National UFO Reporting Center [NUFORC](https://nuforc.org/) is a widely recognized organization dedicated to collecting and analyzing reports of UFOs from across the United States and beyond. However, the reliability of these sightings are often called into question due to various factors such as misidentifications, hoaxes, and the subjective nature of eyewitness testimony. As such, I wanted to invesigate whether there were any correlations between the locations of these sightings and the loacations of major airports in the USA.
+
+## Research Aims:
+### Aim 1
+To Determine Spatial Patterns: Investigate whether there are spatial correlations between the locations of major airports and reported UFO sightings in mainland USA.
+
+### Aim 2
+To Identify Common Shapes: Analyze the most commonly reported shapes of UFOs in sightings.
+
+### Aim 3
+To Assess the Duration of Sightings: Investigate the duration of UFO sightings in regard to the shape recorded.
+
+## Data Origins
+The raw UFO data was sourced from the NUFORC website, and processed by Sigmond Axel to include geolocated and time standardized reports, which is publicly accessible on [github](https://github.com/planetsig/ufo-reports).
+
+The locations of major US airports was acquired from [data.world](https://data.world/ourairports/989444cc-447b-4030-a866-57fcd6c2d3ee) and sourced from [OurAirports](https://ourairports.com/countries/US/airports.html). This dataset includes all North American airports, and is publicly accessible. 
+
+Additionally, the R package [maps](https://cran.r-project.org/web/packages/maps/index.html) was used to draw a geographical map of mainland USA, which provides access to a diverse collection of geographical data, particularly maps of the world, countries, and states/provinces of various countries.
+
+## Project Organization
+The project directory includes two main folders: "/data" and "/images". The "/data" folder contains essential datasets for the project, while the "/images" folder houses both images necessary for the project and visual outputs generated during visualization processes.
+
+Additionally, a comprehensive codebook detailing all labels and abbreviations utilized within the project for data, variables, functions, and other relevant entities is available at the location "/codebook.xlsx". 
+
+## **Data Preparation**
+### Loading Packages
+The project used the 'renv' package to preserve package versions of the libraries used. The package versions used in this project are listed in the file /renv.lock
+
+```{r loadlib, echo = TRUE, results = 'hide', warning = FALSE, message = FALSE}
+#load packages with renv
+if (!require('renv')) 
+{
+  install.packages('renv');
+}
+library(renv)
+renv::restore()
+
+#import packages
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(sf)
+library(maps)
+library(kableExtra)
+```
+
+### Importing data
+```{r import data}
+#load UFO data
+ufo_data <- read.csv("https://raw.githubusercontent.com/tomhbird/PSY6422_UFO_SIGHTINGS/main/Raw/complete.csv")
+
+#load US airport data
+airport_data <- read.csv("https://raw.githubusercontent.com/tomhbird/PSY6422_UFO_SIGHTINGS/main/Raw/list-of-airports-in-united-states-of-america-hxl-tags-1.csv")
+```
+
+### Cleaning the data 
+```{r data wrangling UFO, results='hide', warning=FALSE}
+#First UFO data
+
+#trimming UFO data to only include mainland USA, removing Hawaii, Alaska, and Puerto Rico
+ufo_data_usa <- ufo_data %>%
+  filter(country == "us" & !(state %in% c("hi", "ak", "pr")))
+
+#remove columns "comments," "duration..hours.min.," and "date.posted"
+ufo_data_trim <- subset(ufo_data_usa, 
+                        select = -c(comments, duration..hours.min., date.posted))
+
+#detangle date.time column, spitting them into individual variables "date" and "time"
+ufo_data_trim <- separate(ufo_data_trim, datetime, into = c("date", "time"), sep = " ")
+
+#checking if latitude and longitude columns are in the correct data type
+str(ufo_data_trim)
+
+#as the latitude was a character column, it was converted into a numeric column 
+ufo_data_trim$latitude <- as.numeric(ufo_data_trim$latitude)
+
+#checking to see if it was successfully converted
+str(ufo_data_trim$latitude)
+
+# Convert duration column to numerical
+ufo_data_trim$duration..seconds. <- as.numeric(ufo_data_trim$duration..seconds.)
+
+# Verify the change
+str(ufo_data_trim$duration..seconds.)
+
+# Replace blank recordings of shape with "unknown"
+ufo_data_trim <- ufo_data_trim %>%
+  mutate(shape = ifelse(shape == "", "unknown", shape))
+
+```
+
+```{r data wrangling airport, results='hide', warning=FALSE}
+#Second US airport data
+
+# Filter the dataset to include only entries where the type is "large_airport" and remove rows where both longitude and latitude are 0
+airport_data_filtered <- airport_data %>%
+  filter(type == "large_airport") %>%
+  filter(longitude_deg != 0 | latitude_deg != 0)
+
+#checking if latitude and longitude columns are in the correct data type
+str(airport_data_filtered$longitude_deg)
+str(airport_data_filtered$latitude_deg)
+
+#as the longitude and latitude was a character column, they were converted into a numeric column 
+airport_data_filtered$latitude_deg <- as.numeric(airport_data_filtered$latitude_deg)
+airport_data_filtered$longitude_deg <- as.numeric(airport_data_filtered$longitude_deg)
+
+#checking to see if it was successfully converted
+str(airport_data_filtered$longitude_deg)
+str(airport_data_filtered$latitude_deg)
+
+```
+
+
+
+
+
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
