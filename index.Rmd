@@ -106,8 +106,8 @@ ufo_data_trim <- ufo_data_trim %>%
 ```
 
 ```{r displaying the UFO data}
-#display table of UFO sightings data
-head(ufo_data_trim)
+#display table of first 6 UFO sightings data
+knitr::kable(head(ufo_data_trim))
 ```
 
 #### Second US airport data
@@ -130,11 +130,17 @@ airport_data_filtered$longitude_deg <- as.numeric(airport_data_filtered$longitud
 str(airport_data_filtered$longitude_deg)
 str(airport_data_filtered$latitude_deg)
 
+#removing unecessary columns from airport dataframe
+airport_data_filtered <- airport_data_filtered %>%
+  select(-id, -ident, -elevation_ft, -continent, 
+         -iso_country, -iso_region, -scheduled_service,
+         -gps_code, -iata_code, -home_link, -wikipedia_link,
+         -keywords, -score, -last_updated)
 ```
 
 ```{r displaying the airport data}
-#display table of USA major airport data
-head(airport_data_filtered)
+#display table of first 6 USA major airport data
+knitr::kable(head(airport_data_filtered))
 ```
 
 #### Third creating map of the USA
@@ -149,7 +155,7 @@ usa_df <- fortify(usa)
 
 ## **Visualisations**
 ### UFO sightings plotted on a map of the USA in relation to major airport locations
-```{r results = TRUE}
+```{r map plot, results = TRUE, warning=FALSE}
 # Begin creating the plot
 ggplot() +
   
@@ -185,7 +191,7 @@ ggplot() +
 ```
 
 ### Creating a bar graph of the top 20 most common observed shapes of UFO's
-```{r results = TRUE}
+```{r shape bar graph, results = TRUE, warning=FALSE}
 # Count the frequency of each UFO shape
 ufo_shape_counts <- table(ufo_data_trim$shape)
 
@@ -213,8 +219,8 @@ ggplot(ufo_shape_top20, aes(x = reorder(shape, count), y = count, fill = shape))
         legend.position = "none")
 ```
 
-### #creating stacked barchart to show the most common shapes of UFO and their durations in mainland USA
-```{r results = TRUE}
+### Creating stacked bar graph to show the most common shapes of UFO and their durations in mainland USA
+```{r ahpe and duration stacked bar graph, results = TRUE, warning=FALSE}
 # Calculate quantiles
 quantiles <- quantile(ufo_data_trim$duration..seconds., probs = c(0, 0.25, 0.5, 0.75, 1), na.rm = TRUE)
 
