@@ -70,10 +70,9 @@ ufo_data <- read.csv("https://raw.githubusercontent.com/tomhbird/PSY6422_UFO_AIR
 airport_data <- read.csv("https://raw.githubusercontent.com/tomhbird/PSY6422_UFO_AIRPORTS/main/Raw/list-of-airports-in-united-states-of-america-hxl-tags-1.nosync.csv")
 ```
 
-### Cleaning the data 
+### Cleaning the data
+#### First UFO data
 ```{r data wrangling UFO, results='hide', warning=FALSE}
-#First UFO data
-
 #trimming UFO data to only include mainland USA, removing Hawaii, Alaska, and Puerto Rico
 ufo_data_usa <- ufo_data %>%
   filter(country == "us" & !(state %in% c("hi", "ak", "pr")))
@@ -107,11 +106,14 @@ ufo_data_trim <- ufo_data_trim %>%
 ```
 
 ```{r displaying the UFO data}
-kable(ufo_data_trim, format = "markdown")
+#display table of UFO sightings data
+ufo_data_trim %>%
+  kbl() %>%
+  kable_styling()
 ```
 
+#### Second US airport data
 ```{r data wrangling airport, results='hide', warning=FALSE}
-#Second US airport data
 
 # Filter the dataset to include only entries where the type is "large_airport" and remove rows where both longitude and latitude are 0
 airport_data_filtered <- airport_data %>%
@@ -132,33 +134,127 @@ str(airport_data_filtered$latitude_deg)
 
 ```
 
-
-
-
-
-
-
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r displaying the airport data}
+#display table of USA major airport data
+airport_data_filtered %>%
+  kbl() %>%
+  kable_styling()
 ```
 
-## R Markdown
+#### Third creating map of the USA
+```{r creating map of USA}
+# Plot map of USA
+usa <- map("state", fill = TRUE, col = "transparent", plot = FALSE)
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+# Convert map data to data frame
+usa_df <- fortify(usa)
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
 ```
 
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+## **Visualisations**
+### UFO sightings plotted on a map of the USA in relation to major airport locations
+```{r results = TRUE}
+# Begin creating the plot
+ggplot() +
+  
+  # Add the USA map polygons
+  geom_polygon(data = usa_df, aes(x = long, y = lat, group = group), fill = "beige", color = "black") +
+  
+  # Add UFO sightings as points (darkgreen color)
+  geom_point(data = ufo_data_trim, aes(x = longitude, y = latitude, fill = "ufo sightings"), color = "darkgreen", size = 0.01) +
+  
+  # Add airport locations as points (magenta color)
+  geom_point(data = airport_data_filtered, aes(x = longitude_deg, y = latitude_deg, fill = "major airports"), color = "magenta", size = 1.5) +
+  
+  # Set the aspect ratio and limit the plot to the boundaries of the USA map
+  coord_fixed(xlim = range(usa_df$long), ylim = range(usa_df$lat)) +
+  
+  # Add plot title
+  labs(title = "UFO Sightings in relation to Airports in the USA (1910-2013)", x = "Longitude", y = "Latitude",
+       color = "Data",
+       fill = "Key") + # Change legend title
+  
+  # Set minimal theme with white background and remove grid lines
+  theme_minimal() +
+  theme(panel.background = element_rect(fill = "white", color = NA),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  
+  # Customize x and y axes
+  scale_x_continuous("Longitude", limits = range(usa_df$long)) +
+  scale_y_continuous("Latitude", limits = range(usa_df$lat)) +
+  
+  # Position the legend at the bottom of the plot
+  theme(legend.position = "bottom")
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+### Creating a bar graph of the top 20 most common observed shapes of UFO's
+```{r results = TRUE}
+# Count the frequency of each UFO shape
+ufo_shape_counts <- table(ufo_data_trim$shape)
+
+# Convert the table to a data frame
+ufo_shape_df <- as.data.frame(ufo_shape_counts)
+names(ufo_shape_df) <- c("shape", "count")
+
+# Sort the data frame by count in descending order
+ufo_shape_df <- ufo_shape_df[order(-ufo_shape_df$count), ]
+
+# Select top 20 shapes
+ufo_shape_top20 <- head(ufo_shape_df, 20)
+
+# Create a bar plot to visualize the frequency of top 20 UFO shapes
+ggplot(ufo_shape_top20, aes(x = reorder(shape, count), y = count, fill = shape)) +
+  geom_bar(stat = "identity", fill = "darkgreen", width = 0.7) +
+  labs(title = "Most Common Shapes of UFOs in mainland USA",
+       x = "Shape",
+       y = "Frequency") +
+  coord_flip() +
+  scale_y_continuous(breaks = seq(0, max(ufo_shape_top20$count), by = 2000), limits = c(0, max(ufo_shape_top20$count) + 2000)) +
+  theme_minimal() +
+  theme(axis.title = element_text(size = 12),
+        plot.title = element_text(size = 16, face = "bold"),
+        legend.position = "none")
+```
+
+### #creating stacked barchart to show the most common shapes of UFO and their durations in mainland USA
+```{r results = TRUE}
+# Calculate quantiles
+quantiles <- quantile(ufo_data_trim$duration..seconds., probs = c(0, 0.25, 0.5, 0.75, 1), na.rm = TRUE)
+
+# Define upper and lower bounds
+Q1 <- quantiles["25%"]
+Q3 <- quantiles["75%"]
+IQR <- Q3 - Q1
+lower_bound <- Q1 - 1.5 * IQR
+upper_bound <- Q3 + 1.5 * IQR
+
+# Filter data to remove outliers
+ufo_data_trim_filtered <- ufo_data_trim[ufo_data_trim$duration..seconds. >= lower_bound & ufo_data_trim$duration..seconds. <= upper_bound, ]
+
+# Create a new variable for duration categories
+ufo_data_trim_filtered$duration_category <- cut(ufo_data_trim_filtered$duration..seconds., breaks = c(-Inf, 0, 300, 600, Inf), labels = c("Short", "Short", "Medium", "Long"))
+
+# Combine both data frames
+combined_data <- merge(ufo_shape_top20, ufo_data_trim_filtered, by = "shape")
+
+# Set count to 1 for every data point
+combined_data <- combined_data %>% 
+  mutate(count = 1)
+
+# Create a stacked bar plot to visualize the frequency of top 20 UFO shapes and their durations
+ggplot(combined_data, aes(x = reorder(shape, count), y = count, fill = duration_category)) +
+  geom_bar(stat = "identity", position = "stack", width = 0.7) +
+  labs(title = "Most Common Shapes of UFOs and their Durations in Mainland USA",
+       x = "Shape",
+       y = "Frequency",
+       fill = "Duration") +
+  scale_fill_manual(values = c("Short" = "darkgreen", "Medium" = "forestgreen", "Long" = "lightgreen")) +
+  coord_flip() +
+  scale_y_continuous(breaks = c(0, 2000, 4000, 6000, 8000, 10000, 12000, 14000)) +  
+  theme_minimal() +
+  theme(axis.title = element_text(size = 12),
+        plot.title = element_text(size = 16, face = "bold"),
+        legend.position = "bottom")
+
+```
