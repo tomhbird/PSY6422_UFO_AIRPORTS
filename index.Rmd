@@ -156,8 +156,8 @@ usa_df <- fortify(usa)
 ## **Visualisations**
 ### UFO sightings plotted on a map of the USA in relation to major airport locations
 ```{r map plot, results = TRUE, warning=FALSE}
-# Begin creating the plot
-ggplot() +
+# define data to plot
+ufo_map <- ggplot() +
   
   # Add the USA map polygons
   geom_polygon(data = usa_df, aes(x = long, y = lat, group = group), fill = "beige", color = "black") +
@@ -188,10 +188,20 @@ ggplot() +
   
   # Position the legend at the bottom of the plot
   theme(legend.position = "bottom")
+
+# Save the graph as an image
+ggsave("images/ufo_map.png", plot = ufo_map, width = 6, height = 4, dpi = 300)
 ```
 
-### Creating a bar graph of the top 20 most common observed shapes of UFO's
-```{r shape bar graph, results = TRUE, warning=FALSE}
+## Aim 1:
+To Determine Spatial Patterns: Investigate whether there are spatial correlations between the locations of major airports and reported UFO sightings in mainland USA.
+
+![](Images/ufo_map.png)
+
+
+### Creating stacked bar graph to show the most common shapes of UFO and their durations in mainland USA
+```{r creating a dataframe for the 20 most reported ufo shapes}
+#catagorising the top 20 most reported ufo shapes
 # Count the frequency of each UFO shape
 ufo_shape_counts <- table(ufo_data_trim$shape)
 
@@ -204,26 +214,13 @@ ufo_shape_df <- ufo_shape_df[order(-ufo_shape_df$count), ]
 
 # Select top 20 shapes
 ufo_shape_top20 <- head(ufo_shape_df, 20)
-
-# Create a bar plot to visualize the frequency of top 20 UFO shapes
-ggplot(ufo_shape_top20, aes(x = reorder(shape, count), y = count, fill = shape)) +
-  geom_bar(stat = "identity", fill = "darkgreen", width = 0.7) +
-  labs(title = "Most Common Shapes of UFOs in mainland USA",
-       x = "Shape",
-       y = "Frequency") +
-  coord_flip() +
-  scale_y_continuous(breaks = seq(0, max(ufo_shape_top20$count), by = 2000), limits = c(0, max(ufo_shape_top20$count) + 2000)) +
-  theme_minimal() +
-  theme(axis.title = element_text(size = 12),
-        plot.title = element_text(size = 16, face = "bold"),
-        legend.position = "none")
 ```
 
-### Creating stacked bar graph to show the most common shapes of UFO and their durations in mainland USA
-```{r ahpe and duration stacked bar graph, results = TRUE, warning=FALSE}
-# Calculate quantiles
+```{r shape and duration stacked bar graph, results = TRUE, warning=FALSE}
+# Calculate quantiles of duration
 quantiles <- quantile(ufo_data_trim$duration..seconds., probs = c(0, 0.25, 0.5, 0.75, 1), na.rm = TRUE)
 
+# As there were extreme outliers in the upper bounds, remove them (as this data ranges from 1910-2013, some of the durations recorded may be inaccurate)
 # Define upper and lower bounds
 Q1 <- quantiles["25%"]
 Q3 <- quantiles["75%"]
@@ -245,18 +242,37 @@ combined_data <- combined_data %>%
   mutate(count = 1)
 
 # Create a stacked bar plot to visualize the frequency of top 20 UFO shapes and their durations
-ggplot(combined_data, aes(x = reorder(shape, count), y = count, fill = duration_category)) +
+
+# Define data to plot
+stacked_barchart <- ggplot(combined_data, aes(x = reorder(shape, count), y = count, fill = duration_category)) +
+
+# Add stacked bars representing the frequency of each UFO shape and duration category
   geom_bar(stat = "identity", position = "stack", width = 0.7) +
+
+# Add plot title and axis labels
   labs(title = "Most Common Shapes of UFOs and their Durations in Mainland USA",
        x = "Shape",
        y = "Frequency",
        fill = "Duration") +
+
+# Manually set fill colors for each duration category
   scale_fill_manual(values = c("Short" = "darkgreen", "Medium" = "forestgreen", "Long" = "lightgreen")) +
+
+# Flip the x and y coordinates to create a horizontal bar plot
   coord_flip() +
-  scale_y_continuous(breaks = c(0, 2000, 4000, 6000, 8000, 10000, 12000, 14000)) +  
+
+# Set breaks for the y-axis to ensure proper scale
+  scale_y_continuous(breaks = c(0, 2000, 4000, 6000, 8000, 10000, 12000, 14000)) +
+
+# Apply a minimal theme with white background and bottom legend
   theme_minimal() +
-  theme(axis.title = element_text(size = 12),
-        plot.title = element_text(size = 16, face = "bold"),
-        legend.position = "bottom")
+  theme(axis.title = element_text(size = 12),       # Customize axis title font size
+  plot.title = element_text(size = 16, face = "bold"),  # Customize plot title font size and style
+  legend.position = "bottom")                 # Position legend at the bottom of the plot
+
+# Save the graph as an image
+ggsave("images/stacked_barchart.png", plot = stacked_barchart, width = 10, height = 4, dpi = 300)
 
 ```
+
+![](Images/stacked_barchart.png)
