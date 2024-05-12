@@ -45,6 +45,13 @@ The project used the 'renv' package to preserve package versions of the librarie
 ```{r loadlib, echo = TRUE, results = 'hide', warning = FALSE, message = FALSE}
 #load packages with renv
 
+if (!require('renv')) 
+{
+  install.packages('renv');
+}
+library(renv)
+renv::restore()
+
 #import packages
 library(tidyverse)
 library(ggplot2)
@@ -52,7 +59,6 @@ library(dplyr)
 library(tidyr)
 library(sf)
 library(maps)
-library(kableExtra)
 ```
 
 ### Importing data
@@ -101,9 +107,7 @@ ufo_data_trim <- ufo_data_trim %>%
 
 ```{r displaying the UFO data}
 #display table of UFO sightings data
-ufo_data_trim %>%
-  kbl() %>%
-  kable_styling()
+head(ufo_data_trim)
 ```
 
 #### Second US airport data
@@ -130,9 +134,7 @@ str(airport_data_filtered$latitude_deg)
 
 ```{r displaying the airport data}
 #display table of USA major airport data
-airport_data_filtered %>%
-  kbl() %>%
-  kable_styling()
+head(airport_data_filtered)
 ```
 
 #### Third creating map of the USA
