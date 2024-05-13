@@ -460,32 +460,32 @@ ufo_data_usa &lt;- ufo_data %&gt;%
   filter(country == &quot;us&quot; &amp; !(state %in% c(&quot;hi&quot;, &quot;ak&quot;, &quot;pr&quot;)))
 
 #remove columns &quot;comments,&quot; &quot;duration..hours.min.,&quot; and &quot;date.posted&quot;
-ufo_data_usa &lt;- subset(ufo_data_usa, 
+ufo_data_trim &lt;- subset(ufo_data_usa, 
                         select = -c(comments, duration..hours.min., date.posted))
 
 #detangle date.time column, spitting them into individual variables &quot;date&quot; and &quot;time&quot;
-ufo_data_usa &lt;- separate(ufo_data_usa, datetime, into = c(&quot;date&quot;, &quot;time&quot;), sep = &quot; &quot;)
+ufo_data_trim &lt;- separate(ufo_data_trim, datetime, into = c(&quot;date&quot;, &quot;time&quot;), sep = &quot; &quot;)
 
 #checking if latitude and longitude columns are in the correct data type
-str(ufo_data_usa)
+str(ufo_data_trim)
 
 #as the latitude was a character column, it was converted into a numeric column 
-ufo_data_usa$latitude &lt;- as.numeric(ufo_data_usa$latitude)
+ufo_data_trim$latitude &lt;- as.numeric(ufo_data_trim$latitude)
 
 #checking to see if it was successfully converted
-str(ufo_data_usa$latitude)
+str(ufo_data_trim$latitude)
 
 # Convert duration column to numerical
-ufo_data_usa$duration..seconds. &lt;- as.numeric(ufo_data_usa$duration..seconds.)
+ufo_data_trim$duration..seconds. &lt;- as.numeric(ufo_data_trim$duration..seconds.)
 
 # Verify the change
-str(ufo_data_usa$duration..seconds.)
+str(ufo_data_trim$duration..seconds.)
 
 # Replace blank recordings of shape with &quot;unknown&quot;
-ufo_data_usa &lt;- ufo_data_usa %&gt;%
+ufo_data_trim &lt;- ufo_data_trim %&gt;%
   mutate(shape = ifelse(shape == &quot;&quot;, &quot;unknown&quot;, shape))</code></pre>
 <pre class="r"><code>#display table of first 6 UFO sightings data
-knitr::kable(head(ufo_data_usa))</code></pre>
+knitr::kable(head(ufo_data_trim))</code></pre>
 <table>
 <colgroup>
 <col width="12%" />
@@ -701,7 +701,7 @@ ufo_map &lt;- ggplot() +
   geom_polygon(data = usa_df, aes(x = long, y = lat, group = group), fill = &quot;beige&quot;, color = &quot;black&quot;) +
   
   # Add UFO sightings as points (darkgreen color)
-  geom_point(data = ufo_data_usa, aes(x = longitude, y = latitude, fill = &quot;ufo sightings&quot;), color = &quot;darkgreen&quot;, size = 0.01) +
+  geom_point(data = ufo_data_trim, aes(x = longitude, y = latitude, fill = &quot;ufo sightings&quot;), color = &quot;darkgreen&quot;, size = 0.01) +
   
   # Add airport locations as points (magenta color)
   geom_point(data = airport_data_filtered, aes(x = longitude_deg, y = latitude_deg, fill = &quot;major airports&quot;), color = &quot;magenta&quot;, size = 1.5) +
@@ -756,22 +756,21 @@ for UFOs and misinterpret their sightings.</p>
 <h3>Creating stacked bar graph to show the most common shapes of UFO and
 their durations in mainland USA</h3>
 <pre class="r"><code>#catagorising the top 20 most reported ufo shapes
-
 # Count the frequency of each UFO shape
-ufo_shape_counts &lt;- ufo_data_usa %&gt;%
-  count(shape) %&gt;%
-  arrange(desc(n))
+ufo_shape_counts &lt;- table(ufo_data_trim$shape)
+
+# Convert the table to a data frame
+ufo_shape_df &lt;- as.data.frame(ufo_shape_counts)
+names(ufo_shape_df) &lt;- c(&quot;shape&quot;, &quot;count&quot;)
+
+# Sort the data frame by count in descending order
+ufo_shape_df &lt;- ufo_shape_df[order(-ufo_shape_df$count), ]
 
 # Select top 20 shapes
-ufo_shape_top20 &lt;- head(ufo_shape_counts, 20)</code></pre>
+ufo_shape_top20 &lt;- head(ufo_shape_df, 20)</code></pre>
 <pre class="r"><code># Calculate quantiles of duration
-quantiles &lt;- quantile(ufo_data_usa$duration..seconds., probs = c(0, 0.25, 0.5, 0.75, 1), na.rm = TRUE)
+quantiles &lt;- quantile(ufo_data_trim$duration..seconds., probs = c(0, 0.25, 0.5, 0.75, 1), na.rm = TRUE)
 
-#check quantiles
-head(quantiles)</code></pre>
-<pre><code>##       0%      25%      50%      75%     100% 
-##        0       15      120      600 66276000</code></pre>
-<pre class="r"><code>#as there is extreme outliers calculate 
 # Define upper and lower bounds
 Q1 &lt;- quantiles[&quot;25%&quot;]
 Q3 &lt;- quantiles[&quot;75%&quot;]
@@ -780,13 +779,13 @@ lower_bound &lt;- Q1 - 1.5 * IQR
 upper_bound &lt;- Q3 + 1.5 * IQR
 
 # Filter data to remove outliers
-ufo_data_usa_filtered &lt;- ufo_data_usa[ufo_data_usa$duration..seconds. &gt;= lower_bound &amp; ufo_data_usa$duration..seconds. &lt;= upper_bound, ]
+ufo_data_trim_filtered &lt;- ufo_data_trim[ufo_data_trim$duration..seconds. &gt;= lower_bound &amp; ufo_data_trim$duration..seconds. &lt;= upper_bound, ]
 
 # Create a new variable for duration categories
-ufo_data_usa_filtered$duration_category &lt;- cut(ufo_data_usa_filtered$duration..seconds., breaks = c(-Inf, 0, 300, 600, Inf), labels = c(&quot;Short: 0-300 seconds&quot;, &quot;Short: 0-300 seconds&quot;, &quot;Medium: 301-600 seconds&quot;, &quot;Long: &gt; 600 seconds&quot;))
+ufo_data_trim_filtered$duration_category &lt;- cut(ufo_data_trim_filtered$duration..seconds., breaks = c(-Inf, 0, 300, 600, Inf), labels = c(&quot;Short: 0-300 seconds&quot;, &quot;Short: 0-300 seconds&quot;, &quot;Medium: 301-600 seconds&quot;, &quot;Long: &gt; 600 seconds&quot;))
 
 # Combine both data frames
-combined_data &lt;- merge(ufo_shape_top20, ufo_data_usa_filtered, by = &quot;shape&quot;)
+combined_data &lt;- merge(ufo_shape_top20, ufo_data_trim_filtered, by = &quot;shape&quot;)
 
 # Set count to 1 for every data point
 combined_data &lt;- combined_data %&gt;% 
