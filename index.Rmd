@@ -21,9 +21,6 @@ The phenomenon of unidentified flying objects (UFOs) has captivated the imaginat
 To Determine Spatial Patterns: Investigate whether there are spatial correlations between the locations of major airports and reported UFO sightings in mainland USA.
 
 ### Aim 2
-To Identify Common Shapes: Analyze the most commonly reported shapes of UFOs in sightings.
-
-### Aim 3
 To Assess the Duration of Sightings: Investigate the duration of UFO sightings in regard to the shape recorded.
 
 ## Data Origins
@@ -220,7 +217,6 @@ ufo_shape_top20 <- head(ufo_shape_df, 20)
 # Calculate quantiles of duration
 quantiles <- quantile(ufo_data_trim$duration..seconds., probs = c(0, 0.25, 0.5, 0.75, 1), na.rm = TRUE)
 
-# As there were extreme outliers in the upper bounds, remove them (as this data ranges from 1910-2013, some of the durations recorded may be inaccurate)
 # Define upper and lower bounds
 Q1 <- quantiles["25%"]
 Q3 <- quantiles["75%"]
@@ -232,7 +228,7 @@ upper_bound <- Q3 + 1.5 * IQR
 ufo_data_trim_filtered <- ufo_data_trim[ufo_data_trim$duration..seconds. >= lower_bound & ufo_data_trim$duration..seconds. <= upper_bound, ]
 
 # Create a new variable for duration categories
-ufo_data_trim_filtered$duration_category <- cut(ufo_data_trim_filtered$duration..seconds., breaks = c(-Inf, 0, 300, 600, Inf), labels = c("Short", "Short", "Medium", "Long"))
+ufo_data_trim_filtered$duration_category <- cut(ufo_data_trim_filtered$duration..seconds., breaks = c(-Inf, 0, 300, 600, Inf), labels = c("Short: 0-300 seconds", "Short: 0-300 seconds", "Medium: 301-600 seconds", "Long: > 600 seconds"))
 
 # Combine both data frames
 combined_data <- merge(ufo_shape_top20, ufo_data_trim_filtered, by = "shape")
@@ -242,36 +238,35 @@ combined_data <- combined_data %>%
   mutate(count = 1)
 
 # Create a stacked bar plot to visualize the frequency of top 20 UFO shapes and their durations
-
 # Define data to plot
 stacked_barchart <- ggplot(combined_data, aes(x = reorder(shape, count), y = count, fill = duration_category)) +
-
-# Add stacked bars representing the frequency of each UFO shape and duration category
+  
+  # Add stacked bars representing the frequency of each UFO shape and duration category
   geom_bar(stat = "identity", position = "stack", width = 0.7) +
-
-# Add plot title and axis labels
+  
+  # Add plot title and axis labels
   labs(title = "Most Common Shapes of UFOs and their Durations in Mainland USA",
        x = "Shape",
        y = "Frequency",
        fill = "Duration") +
-
-# Manually set fill colors for each duration category
-  scale_fill_manual(values = c("Short" = "darkgreen", "Medium" = "forestgreen", "Long" = "lightgreen")) +
-
-# Flip the x and y coordinates to create a horizontal bar plot
+  
+  # Manually set fill colors for each duration category
+  scale_fill_manual(values = c("Short: 0-300 seconds" = "darkgreen", "Medium: 301-600 seconds" = "forestgreen", "Long: > 600 seconds" = "lightgreen")) +
+  
+  # Flip the x and y coordinates to create a horizontal bar plot
   coord_flip() +
-
-# Set breaks for the y-axis to ensure proper scale
+  
+  # Set breaks for the y-axis to ensure proper scale
   scale_y_continuous(breaks = c(0, 2000, 4000, 6000, 8000, 10000, 12000, 14000)) +
-
-# Apply a minimal theme with white background and bottom legend
+  
+  # Apply a minimal theme with white background and bottom legend
   theme_minimal() +
   theme(axis.title = element_text(size = 12),       # Customize axis title font size
-  plot.title = element_text(size = 16, face = "bold"),  # Customize plot title font size and style
-  legend.position = "bottom")                 # Position legend at the bottom of the plot
+        plot.title = element_text(size = 16, face = "bold", vjust = 1.5),  # Customize plot title, font size, and style
+        legend.position = "bottom")               # Position legend at the bottom of the plot
 
 # Save the graph as an image
-ggsave("images/stacked_barchart.png", plot = stacked_barchart, width = 10, height = 4, dpi = 300)
+ggsave("images/stacked_barchart.png", plot = stacked_barchart, width = 12, height = 8, dpi = 350)
 
 ```
 
