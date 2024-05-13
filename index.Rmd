@@ -75,36 +75,36 @@ ufo_data_usa <- ufo_data %>%
   filter(country == "us" & !(state %in% c("hi", "ak", "pr")))
 
 #remove columns "comments," "duration..hours.min.," and "date.posted"
-ufo_data_trim <- subset(ufo_data_usa, 
+ufo_data_usa <- subset(ufo_data_usa, 
                         select = -c(comments, duration..hours.min., date.posted))
 
 #detangle date.time column, spitting them into individual variables "date" and "time"
-ufo_data_trim <- separate(ufo_data_trim, datetime, into = c("date", "time"), sep = " ")
+ufo_data_usa <- separate(ufo_data_usa, datetime, into = c("date", "time"), sep = " ")
 
 #checking if latitude and longitude columns are in the correct data type
-str(ufo_data_trim)
+str(ufo_data_usa)
 
 #as the latitude was a character column, it was converted into a numeric column 
-ufo_data_trim$latitude <- as.numeric(ufo_data_trim$latitude)
+ufo_data_usa$latitude <- as.numeric(ufo_data_usa$latitude)
 
 #checking to see if it was successfully converted
-str(ufo_data_trim$latitude)
+str(ufo_data_usa$latitude)
 
 # Convert duration column to numerical
-ufo_data_trim$duration..seconds. <- as.numeric(ufo_data_trim$duration..seconds.)
+ufo_data_usa$duration..seconds. <- as.numeric(ufo_data_usa$duration..seconds.)
 
 # Verify the change
-str(ufo_data_trim$duration..seconds.)
+str(ufo_data_usa$duration..seconds.)
 
 # Replace blank recordings of shape with "unknown"
-ufo_data_trim <- ufo_data_trim %>%
+ufo_data_usa <- ufo_data_usa %>%
   mutate(shape = ifelse(shape == "", "unknown", shape))
 
 ```
 
 ```{r displaying the UFO data}
 #display table of first 6 UFO sightings data
-knitr::kable(head(ufo_data_trim))
+knitr::kable(head(ufo_data_usa))
 ```
 
 #### Second US airport data
@@ -160,7 +160,7 @@ ufo_map <- ggplot() +
   geom_polygon(data = usa_df, aes(x = long, y = lat, group = group), fill = "beige", color = "black") +
   
   # Add UFO sightings as points (darkgreen color)
-  geom_point(data = ufo_data_trim, aes(x = longitude, y = latitude, fill = "ufo sightings"), color = "darkgreen", size = 0.01) +
+  geom_point(data = ufo_data_usa, aes(x = longitude, y = latitude, fill = "ufo sightings"), color = "darkgreen", size = 0.01) +
   
   # Add airport locations as points (magenta color)
   geom_point(data = airport_data_filtered, aes(x = longitude_deg, y = latitude_deg, fill = "major airports"), color = "magenta", size = 1.5) +
@@ -206,23 +206,19 @@ Therefore, this suggests that individuals may mistake aircraft for UFOs and misi
 ### Creating stacked bar graph to show the most common shapes of UFO and their durations in mainland USA
 ```{r creating a dataframe for the 20 most reported ufo shapes}
 #catagorising the top 20 most reported ufo shapes
+
 # Count the frequency of each UFO shape
-ufo_shape_counts <- table(ufo_data_trim$shape)
-
-# Convert the table to a data frame
-ufo_shape_df <- as.data.frame(ufo_shape_counts)
-names(ufo_shape_df) <- c("shape", "count")
-
-# Sort the data frame by count in descending order
-ufo_shape_df <- ufo_shape_df[order(-ufo_shape_df$count), ]
+ufo_shape_counts <- ufo_data_usa %>%
+  count(shape) %>%
+  arrange(desc(n))
 
 # Select top 20 shapes
-ufo_shape_top20 <- head(ufo_shape_df, 20)
+ufo_shape_top20 <- head(ufo_shape_counts, 20)
 ```
 
 ```{r shape and duration stacked bar graph, results = TRUE, warning=FALSE}
 # Calculate quantiles of duration
-quantiles <- quantile(ufo_data_trim$duration..seconds., probs = c(0, 0.25, 0.5, 0.75, 1), na.rm = TRUE)
+quantiles <- quantile(ufo_data_usa$duration..seconds., probs = c(0, 0.25, 0.5, 0.75, 1), na.rm = TRUE)
 
 # Define upper and lower bounds
 Q1 <- quantiles["25%"]
@@ -232,13 +228,13 @@ lower_bound <- Q1 - 1.5 * IQR
 upper_bound <- Q3 + 1.5 * IQR
 
 # Filter data to remove outliers
-ufo_data_trim_filtered <- ufo_data_trim[ufo_data_trim$duration..seconds. >= lower_bound & ufo_data_trim$duration..seconds. <= upper_bound, ]
+ufo_data_usa_filtered <- ufo_data_usa[ufo_data_usa$duration..seconds. >= lower_bound & ufo_data_usa$duration..seconds. <= upper_bound, ]
 
 # Create a new variable for duration categories
-ufo_data_trim_filtered$duration_category <- cut(ufo_data_trim_filtered$duration..seconds., breaks = c(-Inf, 0, 300, 600, Inf), labels = c("Short: 0-300 seconds", "Short: 0-300 seconds", "Medium: 301-600 seconds", "Long: > 600 seconds"))
+ufo_data_usa_filtered$duration_category <- cut(ufo_data_usa_filtered$duration..seconds., breaks = c(-Inf, 0, 300, 600, Inf), labels = c("Short: 0-300 seconds", "Short: 0-300 seconds", "Medium: 301-600 seconds", "Long: > 600 seconds"))
 
 # Combine both data frames
-combined_data <- merge(ufo_shape_top20, ufo_data_trim_filtered, by = "shape")
+combined_data <- merge(ufo_shape_top20, ufo_data_usa_filtered, by = "shape")
 
 # Set count to 1 for every data point
 combined_data <- combined_data %>% 
