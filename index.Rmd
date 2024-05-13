@@ -150,7 +150,7 @@ usa_df <- fortify(usa)
 
 ```
 
-## **Visualisations**
+## **Data Visualisation 1**
 ### UFO sightings plotted on a map of the USA in relation to major airport locations
 ```{r map plot, results = TRUE, warning=FALSE}
 # define data to plot
@@ -193,9 +193,16 @@ ggsave("images/ufo_map.png", plot = ufo_map, width = 6, height = 4, dpi = 300)
 ## Aim 1:
 To Determine Spatial Patterns: Investigate whether there are spatial correlations between the locations of major airports and reported UFO sightings in mainland USA.
 
+### Result
+
 ![](Images/ufo_map.png)
 
+### Interpretation
 
+This visualization illustrates the distribution of UFO sightings across the USA in proximity to major airport locations. The concentration of sightings around airports implies a potential correlation between reported "UFO" sightings and the presence of airports. 
+Therefore, this suggests that individuals may mistake aircraft for UFOs and misinterpret their sightings.
+
+## **Data Visualisation 2**
 ### Creating stacked bar graph to show the most common shapes of UFO and their durations in mainland USA
 ```{r creating a dataframe for the 20 most reported ufo shapes}
 #catagorising the top 20 most reported ufo shapes
@@ -267,7 +274,32 @@ stacked_barchart <- ggplot(combined_data, aes(x = reorder(shape, count), y = cou
 
 # Save the graph as an image
 ggsave("images/stacked_barchart.png", plot = stacked_barchart, width = 12, height = 8, dpi = 350)
-
 ```
 
+## Aim 1:
+To Assess the Duration of Sightings: Investigate the duration of UFO sightings in regard to the shape recorded.
+
+### Result
+
 ![](Images/stacked_barchart.png)
+
+### Interpretation 
+
+This visualization highlights a notable trend: the majority of reported sightings describe objects with a "light" shape. Additionally, there are frequent mentions of other light-related shapes such as "flash" and "fireball." This suggests that aircraft may account for these sightings, given their characteristic appearance, especially at night time where they often have blinking lights. This further emphasises the influence of airport locations on recorded UFO sightings, as not only does visualisation 1 show that reports tend to congregate around airports, visualisation 2 shows that light related terms account for the majority of shapes recorded. 
+
+Furthermore, the duration of these sightings is particularly relevant. As the majority of sightings tend to fall into the short (0 - 300 second) variable, this suggests individuals may just be observing airplanes flying overhead and are mistaking it for a UFO. 
+
+
+## Conclusions
+
+Overall, the visualizations presented shed light on the intriguing relationship between reported UFO sightings, major airport locations, and the characteristics of observed objects. The concentration of sightings around airports suggests a potential correlation, raising the possibility that individuals may misinterpret aircraft as UFOs. Moreover, the prevalence of "light" related shapes in sightings, coupled with the typical duration of these events, reinforces this notion. It appears that many reported sightings align with typical aircraft activity, especially considering the prominence of blinking lights at night. These findings underscore the importance of considering environmental factors, such as airport proximity, when analyzing UFO reports. Ultimately, while the mystery of UFOs continues to captivate public interest, a critical examination of the data suggests that many sightings may have terrestrial explanations rooted in human perception and environmental context.
+
+## Limitations & Future Directions
+A limitation of this project was that I only focused on mainland USA, it would be interesting to see if this trend persists on a global scale. Especially, in countries that may not have as many large airports. Additionally, this project only looked at the relationship between UFO sightings and major US airports, it could add value to investigate smaller airports as well, and see whether UFO sighting reports also pool around them, even if its on a smaller scale. Furthermore, the project did not investigate the time of day of these sightings. Future research could investigate the correlation between the time of day of sightings and airport locations, to see whether factors such as nighttime may affect the number of sightings reported.
+
+A further limitation comes from the data used. The UFO data set ranged from 1910-2013, which may have had some confounding effects on the data presentation, considering many of the airports investigated were build after 1910. As such, it may have been more beneficial to use a more updated data set that with more recent sightings included and older sightings removed. Despite this, the project still highlights a relationship between airport locations and UFO sightings, suggesting these "unidentified flying objects" may just be identifiable flying objects - planes!
+
+
+## References
+The citations provided in the "Data Origins" section of this project are not permanent references as the websites utilized lack a DOI for inclusion in this project. Consequently, these web pages are subject to change or removal, potentially affecting the reproducibility of certain project components.
+
