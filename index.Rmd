@@ -220,6 +220,10 @@ ufo_shape_top20 <- head(ufo_shape_counts, 20)
 # Calculate quantiles of duration
 quantiles <- quantile(ufo_data_usa$duration..seconds., probs = c(0, 0.25, 0.5, 0.75, 1), na.rm = TRUE)
 
+#check quantiles
+head(quantiles)
+
+#as there is extreme outliers calculate 
 # Define upper and lower bounds
 Q1 <- quantiles["25%"]
 Q3 <- quantiles["75%"]
